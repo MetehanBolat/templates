@@ -4,9 +4,9 @@ parameters:
     type: string
   - name: serviceConnection
     type: string
-  - name: copyWorkloadFiles
-    type: boolean
-    default: false
+  #- name: copyWorkloadFiles
+  #  type: boolean
+  #  default: false
 
 stages:
   - stage: Apply
@@ -23,13 +23,13 @@ stages:
                 - checkout: self
                   persistCredentials: true
 
-                - ${{ if eq(parameters.copyWorkloadFiles, true) }}:
-                  - task: DownloadPipelineArtifact@2
-                    displayName: 'Downloading workload files (init.tf and terraform.tfvars)'
-                    inputs:
-                      buildType: current
-                      artifact: workload-$(Build.BuildId)
-                      path: ${{ parameters.workingDirectory }}
+                #- ${{ if eq(parameters.copyWorkloadFiles, true) }}:
+                #  - task: DownloadPipelineArtifact@2
+                #    displayName: 'Downloading workload files (init.tf and terraform.tfvars)'
+                #    inputs:
+                #      buildType: current
+                #      artifact: workload-$(Build.BuildId)
+                #      path: ${{ parameters.workingDirectory }}
                   
                 - bash: |
                     export BINDIR=~/bin
