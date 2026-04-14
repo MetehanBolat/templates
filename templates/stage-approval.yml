@@ -1,0 +1,20 @@
+# .azure-pipelines/templates/stage-approval.yml
+stages:
+  - stage: Approval
+    displayName: 'Manual Approval'
+    dependsOn: Plan
+    condition: eq(dependencies.Plan.outputs['TerraformPlan.terraformPlan.skipApproval'], 'false')
+    jobs:
+      - job: ManualApproval
+        displayName: 'Manual Approval'
+        pool: server
+        steps:
+          - task: ManualValidation@1
+            displayName: 'Approve Terraform Plan'
+            timeoutInMinutes: 120
+            inputs:
+              notifyUsers: $(Build.RequestedForEmail)
+              approvers: $(Build.RequestedForEmail)
+              instructions: "Please check the Terraform Plan output before approving."
+              allowApproversToApproveTheirOwnRuns: true
+              onTimeout: "reject"

@@ -1,0 +1,31 @@
+# .azure-pipelines/templates/stage-prepare.yml
+parameters:
+  - name: workloadDirectory
+    type: string
+
+  - name: artifactName
+    type: string
+    default: 'workload-$(Build.BuildId)'
+
+stages:
+  - stage: Prepare
+    displayName: 'Prepare workspace'
+    jobs:
+      - job: CopyFiles
+        displayName: 'Copy Workload Files'
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            persistCredentials: true
+
+          - task: CopyFiles@2
+            displayName: 'Copy workload files to the artifact directory'
+            inputs:
+              SourceFolder: '${{ parameters.workloadDirectory }}'
+              Contents: '**'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - publish: '$(Build.ArtifactStagingDirectory)'
+            artifact: ${{ parameters.artifactName }}
+            displayName: 'Publish workload files for the next stage'

@@ -1,0 +1,58 @@
+# .azure-pipelines/templates/stage-validate.yml
+parameters:
+  - name: workingDirectory
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: copyWorkloadFiles
+    type: boolean
+    default: false
+
+stages:
+  - stage: Prepare
+    displayName: 'Terraform Validate'
+    jobs:
+      - job: TerraformValidate
+        displayName: Validate
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            persistCredentials: true
+
+          - ${{ if eq(parameters.copyWorkloadFiles, true) }}:
+            - task: DownloadPipelineArtifact@2
+              displayName: 'Downloading workload files (init.tf and terraform.tfvars)'
+              inputs:
+                buildType: current
+                artifact: workload-$(Build.BuildId)
+                path: ${{ parameters.workingDirectory }}
+
+          - bash: |
+              export BINDIR=~/bin
+              mkdir -p $BINDIR
+              curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash
+            displayName: 'Installing tfswitch'
+
+          - bash: $HOME/bin/tfswitch -b $HOME/bin/terraform
+            displayName: 'Setting Terraform Version'
+            workingDirectory: ${{ parameters.workingDirectory }}
+
+          - bash: |
+              $HOME/bin/terraform fmt -check -recursive
+            workingDirectory: ${{ parameters.workingDirectory }}
+            displayName: 'Performing terraform formatter test'
+
+          - task: AzureCLI@2
+            displayName: 'Validating terraform configuration'
+            env:
+              AZDO_PERSONAL_ACCESS_TOKEN: $(System.AccessToken)
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: true
+              workingDirectory: ${{ parameters.workingDirectory }}
+              inlineScript: |
+                $HOME/bin/terraform init --upgrade --reconfigure
+                $HOME/bin/terraform validate
