@@ -4,6 +4,9 @@ parameters:
     type: string
   - name: serviceConnection
     type: string
+  - name: azdoEnvironment
+    type: string
+    default: terraform
   #- name: copyWorkloadFiles
   #  type: boolean
   #  default: false
@@ -15,7 +18,7 @@ stages:
     jobs:
       - deployment: TerraformApply
         displayName: 'Apply'
-        environment: terraform
+        environment: ${{ parameters.azdoEnvironment }}
         strategy:
           runOnce:
             deploy:
